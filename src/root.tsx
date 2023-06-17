@@ -11,6 +11,8 @@ import {
 
 import stylesheet from "@/styles/tailwind.css";
 
+import { cn } from "@/lib/utils/cn";
+
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
@@ -24,7 +26,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
+      <body className={cn("sans h-full bg-background antialiased")}>
         <Outlet />
         <ScrollRestoration />
         <Scripts />

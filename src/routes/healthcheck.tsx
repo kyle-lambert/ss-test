@@ -1,6 +1,6 @@
 // learn more: https://fly.io/docs/reference/configuration/#services-http_checks
+import { prisma } from "@/lib/services/db.server";
 import type { LoaderArgs } from "@remix-run/node";
-import { prisma } from "src/db.server";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const host =
