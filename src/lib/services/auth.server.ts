@@ -1,15 +1,25 @@
 import invariant from "tiny-invariant";
 import { Authenticator, AuthorizationError } from "remix-auth";
 import { FormStrategy } from "remix-auth-form";
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 
-import type { User } from "@prisma/client";
+import type { Password, User } from "@prisma/client";
 
 import { sessionStorage } from "@/lib/services/session.server";
 import { prisma } from "@/lib/services/db.server";
 import { type LoginContext } from "@/lib/utils/validation";
 
 export const FORM_STRATEGY = "FORM_STRATEGY" as const;
+
+export async function hashPassword(password: string) {
+  return await hash(password, 10);
+}
+export async function comparePassword(
+  password: string,
+  hash: Password["hash"]
+) {
+  return await compare(password, hash);
+}
 
 const formStrategy = new FormStrategy(async ({ context }) => {
   const {
@@ -32,7 +42,10 @@ const formStrategy = new FormStrategy(async ({ context }) => {
     throw new AuthorizationError("404");
   }
 
-  const isMatch = await compare(password, userWithPassword.password.hash);
+  const isMatch = await comparePassword(
+    password,
+    userWithPassword.password.hash
+  );
 
   if (!isMatch) {
     throw new AuthorizationError("401");

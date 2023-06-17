@@ -1,3 +1,5 @@
-export default function () {
-  return <main>Main</main>;
+import { redirect } from "@remix-run/node";
+
+export async function loader() {
+  return redirect("/login");
 }
