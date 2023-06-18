@@ -16,11 +16,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import { TENANT_TYPES, USER_TENANT_ROLES } from "@/lib/utils/system";
 import { registerValidator } from "@/lib/utils/validation";
+import type { JsonErrorResponseFormat } from "@/lib/utils/http";
 
 import { cn } from "@/lib/utils/cn";
 
 import { UserRegisterForm } from "./user-register-form";
-import type { JsonErrorResponseFormat } from "@/lib/utils/http";
 
 export async function action({ request }: ActionArgs) {
   const formData = Object.fromEntries(await request.formData());
@@ -93,27 +93,27 @@ export async function action({ request }: ActionArgs) {
 
     invariant(createdTenant, "createdTenant does not exist");
 
-    const customer = await stripe.customers.create({
-      name: createdTenant.name,
-      metadata: {
-        userId: createdUser.id,
-        tenantId: createdTenant.id,
-      },
-    });
+    // const customer = await stripe.customers.create({
+    //   name: createdTenant.name,
+    //   metadata: {
+    //     userId: createdUser.id,
+    //     tenantId: createdTenant.id,
+    //   },
+    // });
 
-    const updatedTenant = await prisma.tenant.update({
-      where: {
-        id: createdTenant.id,
-      },
-      data: {
-        stripeCustomerId: customer.id,
-      },
-    });
+    // const updatedTenant = await prisma.tenant.update({
+    //   where: {
+    //     id: createdTenant.id,
+    //   },
+    //   data: {
+    //     stripeCustomerId: customer.id,
+    //   },
+    // });
 
     const session = await getSession(request.headers.get("Cookie"));
     session.set(authenticator.sessionKey, createdUser.id);
 
-    return redirect(`/new/app/${updatedTenant.id}`, {
+    return redirect(`/app/${createdTenant.id}`, {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
