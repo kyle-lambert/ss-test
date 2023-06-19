@@ -1,8 +1,25 @@
 import { PrismaClient } from "@prisma/client";
+import { ROLE_PERMISSIONS } from "@/lib/utils/system";
 
 const prisma = new PrismaClient();
 
 async function seed() {
+  await prisma.user.deleteMany();
+  await prisma.tenant.deleteMany();
+  await prisma.userTenant.deleteMany();
+  await prisma.role.deleteMany();
+  await prisma.permission.deleteMany();
+
+  await Promise.all(
+    ROLE_PERMISSIONS.map(async (permissionName) => {
+      const promise = await prisma.permission.create({
+        data: {
+          name: permissionName,
+        },
+      });
+      return promise;
+    })
+  );
   console.log(`Database has been seeded. 🌱`);
 }
 

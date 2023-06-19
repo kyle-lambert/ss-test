@@ -1,7 +1,5 @@
 import { Link, useActionData } from "@remix-run/react";
 import { type ActionArgs, redirect } from "@remix-run/node";
-import Stripe from "stripe";
-import invariant from "tiny-invariant";
 import { isArray } from "lodash";
 import { validationError } from "remix-validated-form";
 import { unprocessableEntity } from "remix-utils";
@@ -9,18 +7,24 @@ import { unprocessableEntity } from "remix-utils";
 import { prisma } from "@/lib/services/db.server";
 import { commitSession, getSession } from "@/lib/services/session.server";
 import { authenticator, hashPassword } from "@/lib/services/auth.server";
-import { stripe } from "@/lib/services/stripe.server";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { TENANT_TYPES, USER_TENANT_ROLES } from "@/lib/utils/system";
+import {
+  ADMIN_ROLE_PERMISSIONS,
+  BASIC_ROLE_PERMISSIONS,
+  TENANT_ROLES_MAP,
+  TENANT_TYPES,
+} from "@/lib/utils/system";
+
 import { registerValidator } from "@/lib/utils/validation";
-import type { JsonErrorResponseFormat } from "@/lib/utils/http";
+import type { ResponseJSON } from "@/lib/utils/http";
 
 import { cn } from "@/lib/utils/cn";
 
 import { UserRegisterForm } from "./user-register-form";
+import { checkExistingUser } from "@/lib/services/user.server";
 
 export async function action({ request }: ActionArgs) {
   const formData = Object.fromEntries(await request.formData());
@@ -34,20 +38,13 @@ export async function action({ request }: ActionArgs) {
   const { fullName, email, password } = result.data;
 
   try {
-    const userExists = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-      include: {
-        password: true,
-      },
-    });
+    const isExistingUser = await checkExistingUser({ email });
 
-    if (userExists) {
-      return unprocessableEntity<JsonErrorResponseFormat>({
+    if (isExistingUser) {
+      return unprocessableEntity<ResponseJSON>({
         errors: [
           {
-            title: "User exists",
+            name: "User exists",
             description:
               "Whoops! It looks like that email address is already taken. Please try again using a different email address.",
           },
@@ -55,82 +52,126 @@ export async function action({ request }: ActionArgs) {
       });
     }
 
-    const createdUser = await prisma.user.create({
-      data: {
-        fullName,
-        email,
-        password: {
-          create: {
-            hash: await hashPassword(password),
-          },
-        },
-        tenants: {
-          create: {
-            role: USER_TENANT_ROLES.OWNER,
-            tenant: {
-              create: {
-                name: fullName,
-                type: TENANT_TYPES.PERSONAL,
-              },
+    const allPermissions = await prisma.permission.findMany();
+    const adminPermissions = allPermissions.filter((permission) =>
+      ADMIN_ROLE_PERMISSIONS.includes(
+        permission.name as (typeof ADMIN_ROLE_PERMISSIONS)[number]
+      )
+    );
+    const basicPermissions = allPermissions.filter((permission) =>
+      BASIC_ROLE_PERMISSIONS.includes(
+        permission.name as (typeof BASIC_ROLE_PERMISSIONS)[number]
+      )
+    );
+
+    const [user, userTenant, tenant] = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          fullName,
+          email,
+          password: {
+            create: {
+              hash: await hashPassword(password),
             },
           },
         },
-      },
-      include: {
-        tenants: {
-          include: {
-            tenant: true,
+      });
+
+      const tenant = await tx.tenant.create({
+        data: {
+          name: fullName,
+          type: TENANT_TYPES.PERSONAL,
+          roles: {
+            create: [
+              {
+                name: TENANT_ROLES_MAP.CREATOR,
+                permissions: {
+                  connect: allPermissions.map((permission) => {
+                    return { id: permission.id };
+                  }),
+                },
+              },
+              {
+                name: TENANT_ROLES_MAP.ADMIN,
+                permissions: {
+                  connect: adminPermissions.map((permission) => {
+                    return { id: permission.id };
+                  }),
+                },
+              },
+              {
+                name: TENANT_ROLES_MAP.BASIC,
+                permissions: {
+                  connect: basicPermissions.map((permission) => {
+                    return { id: permission.id };
+                  }),
+                },
+              },
+            ],
           },
         },
-      },
+        include: {
+          roles: true,
+        },
+      });
+
+      const creatorRole = tenant.roles.find(
+        (role) => role.name === TENANT_ROLES_MAP.CREATOR
+      );
+
+      if (!creatorRole) {
+        throw new Error("Unable to find creatorRole");
+      }
+
+      const userTenant = await tx.userTenant.create({
+        data: {
+          user: {
+            connect: {
+              id: user.id,
+            },
+          },
+          tenant: {
+            connect: {
+              id: tenant.id,
+            },
+          },
+          role: {
+            connect: {
+              id: creatorRole.id,
+            },
+          },
+        },
+      });
+
+      return [user, userTenant, tenant];
     });
 
-    const createdTenant = createdUser.tenants.find(
-      (tenant) => tenant.userId === createdUser.id
-    )?.tenant;
+    console.log("user", JSON.stringify(user, null, 2));
+    console.log("userTenant", JSON.stringify(userTenant, null, 2));
+    console.log("tenant", JSON.stringify(tenant, null, 2));
 
-    console.log(JSON.stringify(createdTenant, null, 2));
-
-    invariant(createdTenant, "createdTenant does not exist");
-
-    // const customer = await stripe.customers.create({
-    //   name: createdTenant.name,
-    //   metadata: {
-    //     userId: createdUser.id,
-    //     tenantId: createdTenant.id,
-    //   },
-    // });
-
-    // const updatedTenant = await prisma.tenant.update({
-    //   where: {
-    //     id: createdTenant.id,
-    //   },
-    //   data: {
-    //     stripeCustomerId: customer.id,
-    //   },
+    // await createAndAssignStripeCustomer({
+    //   tenantId: tenant.id,
+    //   tenantName: tenant.name,
     // });
 
     const session = await getSession(request.headers.get("Cookie"));
-    session.set(authenticator.sessionKey, createdUser.id);
+    session.set(authenticator.sessionKey, user.id);
 
-    return redirect(`/app/${createdTenant.id}`, {
+    return redirect(`/app/${tenant.id}`, {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
     });
   } catch (error) {
+    console.log("error", JSON.stringify(error, null, 2));
     if (error instanceof Response) return error;
-    if (error instanceof Stripe.errors.StripeError) {
-      console.log("STRIPE ERROR", error);
-    } else {
-      console.log("UNKNOWN ERROR", error);
-    }
     throw error;
   }
 }
 
 export default function () {
-  const { errors } = useActionData<JsonErrorResponseFormat>() || {};
+  const { errors } = useActionData<ResponseJSON>() || {};
   return (
     <div className="container relative flex h-full flex-col items-center justify-center lg:px-0">
       <Link
@@ -157,7 +198,7 @@ export default function () {
             errors.map((error, idx) => {
               return (
                 <Alert key={idx} variant="destructive">
-                  <AlertTitle>{error.title}</AlertTitle>
+                  <AlertTitle>{error.name}</AlertTitle>
                   <AlertDescription>{error.description}</AlertDescription>
                 </Alert>
               );
