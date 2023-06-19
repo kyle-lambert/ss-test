@@ -1,26 +1,28 @@
-const ALL_TENANT_TYPES = ["PERSONAL", "TEAM"] as const;
+/**
+ * Types
+ */
+const TENANT_TYPES = ["INDIVIDUAL", "TEAM"] as const;
 
-export const TENANT_TYPES = ALL_TENANT_TYPES.reduce((acc, type) => {
+export const TENANT_TYPES_MAP = TENANT_TYPES.reduce((acc, type) => {
   acc[type] = type;
   return acc;
-}, {} as Record<(typeof ALL_TENANT_TYPES)[number], (typeof ALL_TENANT_TYPES)[number]>);
+}, {} as Record<(typeof TENANT_TYPES)[number], (typeof TENANT_TYPES)[number]>);
 
-const ALL_USER_TENANT_ROLES = ["OWNER", "MEMBER"] as const;
-
-export const USER_TENANT_ROLES = ALL_USER_TENANT_ROLES.reduce((acc, type) => {
-  acc[type] = type;
-  return acc;
-}, {} as Record<(typeof ALL_USER_TENANT_ROLES)[number], (typeof ALL_USER_TENANT_ROLES)[number]>);
-
-export const TENANT_ROLES = ["CREATOR", "ADMIN", "BASIC"] as const;
+/**
+ * Roles
+ */
+export const TENANT_ROLES = ["OWNER", "ADMIN", "BASIC"] as const;
 export const TENANT_ROLES_MAP = TENANT_ROLES.reduce((acc, type) => {
   acc[type] = type;
   return acc;
 }, {} as Record<(typeof TENANT_ROLES)[number], (typeof TENANT_ROLES)[number]>);
 
+/**
+ * Permissions
+ */
 export const ROLE_PERMISSIONS = [
-  "creator:create",
-  "creator:delete",
+  "owner:create",
+  "owner:delete",
   "admin:create",
   "admin:delete",
   "basic:create",

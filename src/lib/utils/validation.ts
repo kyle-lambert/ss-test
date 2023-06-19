@@ -10,7 +10,10 @@ const loginSchema = z.object({
 });
 export type LoginSchema = z.infer<typeof loginSchema>;
 export const loginValidator = withZod(loginSchema);
-export type LoginContext = Record<"formData", z.infer<typeof loginSchema>>;
+export type AuthenticateLoginContext = Record<
+  "formData",
+  z.infer<typeof loginSchema>
+>;
 
 /**
  * Register

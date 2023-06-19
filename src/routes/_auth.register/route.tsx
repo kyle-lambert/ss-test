@@ -11,12 +11,7 @@ import { authenticator, hashPassword } from "@/lib/services/auth.server";
 import { buttonVariants } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import {
-  ADMIN_ROLE_PERMISSIONS,
-  BASIC_ROLE_PERMISSIONS,
-  TENANT_ROLES_MAP,
-  TENANT_TYPES,
-} from "@/lib/utils/system";
+import { TENANT_ROLES_MAP, TENANT_TYPES_MAP } from "@/lib/utils/system";
 
 import { registerValidator } from "@/lib/utils/validation";
 import type { ResponseJSON } from "@/lib/utils/http";
@@ -25,6 +20,8 @@ import { cn } from "@/lib/utils/cn";
 
 import { UserRegisterForm } from "./user-register-form";
 import { checkExistingUser } from "@/lib/services/user.server";
+import { getRolePermissions } from "@/lib/services/permission.server";
+import { createAndAssignStripeCustomer } from "@/lib/services/stripe.server";
 
 export async function action({ request }: ActionArgs) {
   const formData = Object.fromEntries(await request.formData());
@@ -52,17 +49,8 @@ export async function action({ request }: ActionArgs) {
       });
     }
 
-    const allPermissions = await prisma.permission.findMany();
-    const adminPermissions = allPermissions.filter((permission) =>
-      ADMIN_ROLE_PERMISSIONS.includes(
-        permission.name as (typeof ADMIN_ROLE_PERMISSIONS)[number]
-      )
-    );
-    const basicPermissions = allPermissions.filter((permission) =>
-      BASIC_ROLE_PERMISSIONS.includes(
-        permission.name as (typeof BASIC_ROLE_PERMISSIONS)[number]
-      )
-    );
+    const { ownerPermissions, adminPermissions, basicPermissions } =
+      await getRolePermissions();
 
     const [user, userTenant, tenant] = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -80,13 +68,13 @@ export async function action({ request }: ActionArgs) {
       const tenant = await tx.tenant.create({
         data: {
           name: fullName,
-          type: TENANT_TYPES.PERSONAL,
+          type: TENANT_TYPES_MAP.INDIVIDUAL,
           roles: {
             create: [
               {
-                name: TENANT_ROLES_MAP.CREATOR,
+                name: TENANT_ROLES_MAP.OWNER,
                 permissions: {
-                  connect: allPermissions.map((permission) => {
+                  connect: ownerPermissions.map((permission) => {
                     return { id: permission.id };
                   }),
                 },
@@ -115,12 +103,12 @@ export async function action({ request }: ActionArgs) {
         },
       });
 
-      const creatorRole = tenant.roles.find(
-        (role) => role.name === TENANT_ROLES_MAP.CREATOR
+      const ownerRole = tenant.roles.find(
+        (role) => role.name === TENANT_ROLES_MAP.OWNER
       );
 
-      if (!creatorRole) {
-        throw new Error("Unable to find creatorRole");
+      if (!ownerRole) {
+        throw new Error("Unable to find ownerRole");
       }
 
       const userTenant = await tx.userTenant.create({
@@ -137,7 +125,7 @@ export async function action({ request }: ActionArgs) {
           },
           role: {
             connect: {
-              id: creatorRole.id,
+              id: ownerRole.id,
             },
           },
         },

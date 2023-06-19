@@ -12,8 +12,11 @@ import { FORM_STRATEGY, authenticator } from "@/lib/services/auth.server";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 
-import { type LoginContext, loginValidator } from "@/lib/utils/validation";
-import type { JsonErrorResponseFormat } from "@/lib/utils/http";
+import {
+  type AuthenticateLoginContext,
+  loginValidator,
+} from "@/lib/utils/validation";
+import type { ResponseJSON } from "@/lib/utils/http";
 import { cn } from "@/lib/utils/cn";
 
 import { UserLoginForm } from "./user-login-form";
@@ -29,7 +32,7 @@ export async function action({ request }: ActionArgs) {
 
   try {
     const userId = await authenticator.authenticate(FORM_STRATEGY, request, {
-      context: { formData: result.data } as LoginContext,
+      context: { formData: result.data } as AuthenticateLoginContext,
     });
 
     const session = await getSession(request.headers.get("Cookie"));
@@ -44,10 +47,10 @@ export async function action({ request }: ActionArgs) {
     if (error instanceof Response) return error;
     if (error instanceof AuthorizationError) {
       if (error.message === "401" || error.message === "404") {
-        return unauthorized<JsonErrorResponseFormat>({
+        return unauthorized<ResponseJSON>({
           errors: [
             {
-              title: "Authorisation error",
+              name: "Authorisation error",
               description:
                 "Opps! It looks like you've entered some invalid credentials. Please try again with a valid email and password.",
             },
@@ -61,7 +64,7 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function () {
-  const { errors } = useActionData<JsonErrorResponseFormat>() || {};
+  const { errors } = useActionData<ResponseJSON>() || {};
 
   return (
     <div className="container relative flex h-full flex-col items-center justify-center lg:px-0">
@@ -91,7 +94,7 @@ export default function () {
             errors.map((error, idx) => {
               return (
                 <Alert key={idx} variant="destructive">
-                  <AlertTitle>{error.title}</AlertTitle>
+                  <AlertTitle>{error.name}</AlertTitle>
                   <AlertDescription>{error.description}</AlertDescription>
                 </Alert>
               );

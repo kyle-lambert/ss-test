@@ -7,7 +7,7 @@ import type { Password, User } from "@prisma/client";
 
 import { sessionStorage } from "@/lib/services/session.server";
 import { prisma } from "@/lib/services/db.server";
-import { type LoginContext } from "@/lib/utils/validation";
+import { type AuthenticateLoginContext } from "@/lib/utils/validation";
 
 export const FORM_STRATEGY = "FORM_STRATEGY" as const;
 
@@ -24,7 +24,7 @@ export async function comparePassword(
 const formStrategy = new FormStrategy(async ({ context }) => {
   const {
     formData: { email, password },
-  } = (context as LoginContext) ?? {};
+  } = (context as AuthenticateLoginContext) ?? {};
 
   invariant(email, "Missing email in FormStrategy");
   invariant(password, "Missing password in FormStrategy");

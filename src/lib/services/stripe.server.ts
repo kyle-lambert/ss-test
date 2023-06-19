@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import type { Prisma, Tenant } from "@prisma/client";
+import type { Tenant } from "@prisma/client";
 import { prisma } from "./db.server";
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
@@ -7,15 +7,17 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
   typescript: true,
 });
 
-async function updateTenant(
+async function assignStripeCustomerToTenant(
   tenantId: Tenant["id"],
-  data: Prisma.TenantUpdateInput
+  stripeCustomerId: Tenant["stripeCustomerId"]
 ) {
   const result = await prisma.tenant.update({
     where: {
       id: tenantId,
     },
-    data,
+    data: {
+      stripeCustomerId,
+    },
   });
   return result;
 }
@@ -44,5 +46,5 @@ export async function createAndAssignStripeCustomer({
   tenantName: Tenant["name"];
 }) {
   const stripeCustomer = await createStripeCustomer({ tenantId, tenantName });
-  await updateTenant(tenantId, { stripeCustomerId: stripeCustomer.id });
+  await assignStripeCustomerToTenant(tenantId, stripeCustomer.id);
 }
