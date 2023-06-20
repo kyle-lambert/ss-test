@@ -90,7 +90,7 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
                   key={tenant.id}
                   onSelect={() => {
                     setSelectedTenant(tenant);
-                    // navigate(`/app/${tenant.id}`);
+                    navigate(`/app/${tenant.id}`);
                   }}
                   className="text-sm"
                 >
