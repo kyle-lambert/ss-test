@@ -12,6 +12,7 @@ import { serverError } from "remix-utils";
 import type { ResponseJSON } from "@/lib/utils/http";
 
 import { MainNav } from "./main-nav";
+import { UserNav } from "./user-nav";
 
 export async function loader({ request, params }: LoaderArgs) {
   const userId = await authenticator.isAuthenticated(request, {
@@ -63,7 +64,7 @@ export default function Dashboard() {
           {tenants.length > 0 ? <TenantSwitcher tenants={tenants} /> : null}
           <MainNav className="mx-6" />
           <div className="ml-auto flex items-center space-x-4">
-            {/* <UserNavigation /> */}
+            <UserNav user={user} />
           </div>
         </div>
       </div>

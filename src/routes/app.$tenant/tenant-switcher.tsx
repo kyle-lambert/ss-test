@@ -34,18 +34,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import type { Tenant } from "@prisma/client";
 import { cn } from "@/lib/utils/cn";
+import { getInitial } from "@/lib/utils/helpers";
 
 interface TenantSwitcherProps {
   tenants: Tenant[];
 }
-
-const avatarFallbackInitial = (name: string) => {
-  return name
-    .split(" ")
-    .map((word) => word[0].toUpperCase())
-    .slice(0, 1)
-    .join("");
-};
 
 export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
@@ -74,9 +67,7 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
             className={cn("w-[200px] justify-between")}
           >
             <Avatar className="mr-2 h-5 w-5">
-              <AvatarFallback>
-                {avatarFallbackInitial(selectedTenant.name)}
-              </AvatarFallback>
+              <AvatarFallback>{getInitial(selectedTenant.name)}</AvatarFallback>
             </Avatar>
             <span className="mr-2 truncate">{selectedTenant.name}</span>
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
@@ -95,9 +86,7 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
                   className="text-sm"
                 >
                   <Avatar className="mr-2 h-5 w-5">
-                    <AvatarFallback>
-                      {avatarFallbackInitial(tenant.name)}
-                    </AvatarFallback>
+                    <AvatarFallback>{getInitial(tenant.name)}</AvatarFallback>
                   </Avatar>
                   <span className="truncate">{tenant.name}</span>
                   <Check
