@@ -34,31 +34,16 @@ export async function action({ request }: ActionArgs) {
   }
 
   if (event.type === "product.created") {
-    /**
-     * {
-        "id": "prod_O7IdLobf7EZwJr",
-        "object": "product",
-        "active": true,
-        "created": 1687265488,
-        "default_price": null,
-        "description": "Comfortable gray cotton t-shirt",
-        "images": [],
-        "livemode": false,
-        "metadata": {},
-        "name": "T-shirt",
-        "package_dimensions": null,
-        "shippable": null,
-        "statement_descriptor": null,
-        "tax_code": null,
-        "unit_label": null,
-        "updated": 1687265488,
-        "url": null
-      }
-     */
+    const productCreated = event.data.object;
+    console.log("productCreated", JSON.stringify(productCreated, null, 3));
   }
   if (event.type === "product.updated") {
+    const productUpdated = event.data.object;
+    console.log("productUpdated", JSON.stringify(productUpdated, null, 3));
   }
   if (event.type === "product.deleted") {
+    const productDeleted = event.data.object;
+    console.log("productDeleted", JSON.stringify(productDeleted, null, 3));
   }
 
   return json({});

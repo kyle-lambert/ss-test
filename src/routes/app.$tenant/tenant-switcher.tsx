@@ -78,7 +78,7 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
                 {avatarFallbackInitial(selectedTenant.name)}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate">{selectedTenant.name}</span>
+            <span className="mr-2 truncate">{selectedTenant.name}</span>
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
