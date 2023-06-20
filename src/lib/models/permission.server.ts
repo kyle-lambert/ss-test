@@ -1,8 +1,8 @@
+import { prisma } from "../services/db.server";
 import {
   ADMIN_ROLE_PERMISSIONS,
   BASIC_ROLE_PERMISSIONS,
 } from "../utils/system";
-import { prisma } from "./db.server";
 
 export async function findAllPermissions() {
   const result = await prisma.permission.findMany();

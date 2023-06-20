@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import { prisma } from "./db.server";
+import { prisma } from "../services/db.server";
 
 export async function findUserByEmail({ email }: Pick<User, "email">) {
   const result = await prisma.user.findUnique({

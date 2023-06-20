@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { ROLE_PERMISSIONS } from "@/lib/utils/system";
+import {
+  ADMIN_ROLE_PERMISSIONS,
+  BASIC_ROLE_PERMISSIONS,
+  ROLE_PERMISSIONS,
+} from "@/lib/utils/system";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +13,8 @@ async function seed() {
   await prisma.userTenant.deleteMany();
   await prisma.role.deleteMany();
   await prisma.permission.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.subscription.deleteMany();
 
   await Promise.all(
     ROLE_PERMISSIONS.map(async (permissionName) => {
@@ -20,6 +26,7 @@ async function seed() {
       return promise;
     })
   );
+
   console.log(`Database has been seeded. 🌱`);
 }
 

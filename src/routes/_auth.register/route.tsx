@@ -19,9 +19,9 @@ import type { ResponseJSON } from "@/lib/utils/http";
 import { cn } from "@/lib/utils/cn";
 
 import { UserRegisterForm } from "./user-register-form";
-import { checkExistingUser } from "@/lib/services/user.server";
-import { getRolePermissions } from "@/lib/services/permission.server";
-import { createAndAssignStripeCustomer } from "@/lib/services/stripe.server";
+import { checkExistingUser } from "@/lib/models/user.server";
+import { getRolePermissions } from "@/lib/models/permission.server";
+// import { createAndAssignStripeCustomer } from "@/lib/services/stripe.server";
 
 export async function action({ request }: ActionArgs) {
   const formData = Object.fromEntries(await request.formData());
@@ -134,9 +134,9 @@ export async function action({ request }: ActionArgs) {
       return [user, userTenant, tenant];
     });
 
-    console.log("user", JSON.stringify(user, null, 2));
-    console.log("userTenant", JSON.stringify(userTenant, null, 2));
-    console.log("tenant", JSON.stringify(tenant, null, 2));
+    console.log("✅ user", JSON.stringify(user, null, 2));
+    console.log("✅ userTenant", JSON.stringify(userTenant, null, 2));
+    console.log("✅ tenant", JSON.stringify(tenant, null, 2));
 
     // await createAndAssignStripeCustomer({
     //   tenantId: tenant.id,
