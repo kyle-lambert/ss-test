@@ -9,7 +9,7 @@ import {
 } from "@/lib/models/user-tenant.server";
 import TenantSwitcher from "./tenant-switcher";
 import { serverError } from "remix-utils";
-import type { ResponseJSON } from "@/lib/utils/http";
+import type { ErrorResponse } from "@/lib/utils/http";
 
 import { MainNav } from "./main-nav";
 import { UserNav } from "./user-nav";
@@ -33,13 +33,11 @@ export async function loader({ request, params }: LoaderArgs) {
       role,
     });
   } catch (error) {
-    throw serverError<ResponseJSON>({
-      errors: [
-        {
-          name: "Server Error",
-          description: "Error in loaderApplication",
-        },
-      ],
+    throw serverError<ErrorResponse>({
+      error: {
+        name: "Server error",
+        description: "Error while tyring to load loaderApplication",
+      },
     });
   }
 }

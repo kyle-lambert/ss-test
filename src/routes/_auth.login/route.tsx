@@ -4,8 +4,6 @@ import { AuthorizationError } from "remix-auth";
 import { unauthorized } from "remix-utils";
 import { validationError } from "remix-validated-form";
 
-import isArray from "lodash/isArray";
-
 import { getSession, commitSession } from "@/lib/services/session.server";
 import { FORM_STRATEGY, authenticator } from "@/lib/services/auth.server";
 
@@ -16,7 +14,8 @@ import {
   type AuthenticateLoginContext,
   loginValidator,
 } from "@/lib/utils/validation";
-import type { ResponseJSON } from "@/lib/utils/http";
+
+import type { ErrorResponse } from "@/lib/utils/http";
 import { cn } from "@/lib/utils/cn";
 
 import { UserLoginForm } from "./user-login-form";
@@ -47,14 +46,12 @@ export async function action({ request }: ActionArgs) {
     if (error instanceof Response) return error;
     if (error instanceof AuthorizationError) {
       if (error.message === "401" || error.message === "404") {
-        return unauthorized<ResponseJSON>({
-          errors: [
-            {
-              name: "Authorisation error",
-              description:
-                "Opps! It looks like you've entered some invalid credentials. Please try again with a valid email and password.",
-            },
-          ],
+        return unauthorized<ErrorResponse>({
+          error: {
+            name: "Authorisation error",
+            description:
+              "Opps! It looks like you've entered some invalid credentials. Please try again with a valid email and password.",
+          },
         });
       }
     }
@@ -64,7 +61,7 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function () {
-  const { errors } = useActionData<ResponseJSON>() || {};
+  const { error } = useActionData<ErrorResponse>() || {};
 
   return (
     <div className="container relative flex h-full flex-col items-center justify-center lg:px-0">
@@ -90,15 +87,14 @@ export default function () {
 
           <UserLoginForm validator={loginValidator} />
 
-          {isArray(errors) &&
-            errors.map((error, idx) => {
-              return (
-                <Alert key={idx} variant="destructive">
-                  <AlertTitle>{error.name}</AlertTitle>
-                  <AlertDescription>{error.description}</AlertDescription>
-                </Alert>
-              );
-            })}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertTitle>{error.name}</AlertTitle>
+              {error.description ? (
+                <AlertDescription>{error.description}</AlertDescription>
+              ) : null}
+            </Alert>
+          ) : null}
         </div>
       </div>
     </div>

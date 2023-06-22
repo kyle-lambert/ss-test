@@ -1,8 +1,14 @@
-type Response = {
-  name: string;
-  description: string;
+export type Response = {
+  message: {
+    name: string;
+    description?: string;
+  };
 };
-export type ResponseJSON = {
-  messages?: Response[];
-  errors?: Response[];
+
+export type ErrorResponse = {
+  error: {
+    name: string;
+    description?: string;
+    code?: string;
+  };
 };

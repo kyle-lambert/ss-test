@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TENANT_ROLES_MAP, TENANT_TYPES_MAP } from "@/lib/utils/system";
 
 import { registerValidator } from "@/lib/utils/validation";
-import type { ResponseJSON } from "@/lib/utils/http";
+import type { ErrorResponse } from "@/lib/utils/http";
 
 import { cn } from "@/lib/utils/cn";
 
@@ -38,14 +38,12 @@ export async function action({ request }: ActionArgs) {
     const isExistingUser = await checkExistingUser({ email });
 
     if (isExistingUser) {
-      return unprocessableEntity<ResponseJSON>({
-        errors: [
-          {
-            name: "User exists",
-            description:
-              "Whoops! It looks like that email address is already taken. Please try again using a different email address.",
-          },
-        ],
+      return unprocessableEntity<ErrorResponse>({
+        error: {
+          name: "User exists",
+          description:
+            "Whoops! It looks like that email address is already taken. Please try again using a different email address.",
+        },
       });
     }
 
@@ -159,7 +157,8 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function () {
-  const { errors } = useActionData<ResponseJSON>() || {};
+  const { error } = useActionData<ErrorResponse>() || {};
+
   return (
     <div className="container relative flex h-full flex-col items-center justify-center lg:px-0">
       <Link
@@ -182,15 +181,14 @@ export default function () {
             </p>
           </div>
           <UserRegisterForm validator={registerValidator} />
-          {isArray(errors) &&
-            errors.map((error, idx) => {
-              return (
-                <Alert key={idx} variant="destructive">
-                  <AlertTitle>{error.name}</AlertTitle>
-                  <AlertDescription>{error.description}</AlertDescription>
-                </Alert>
-              );
-            })}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertTitle>{error.name}</AlertTitle>
+              {error.description ? (
+                <AlertDescription>{error.description}</AlertDescription>
+              ) : null}
+            </Alert>
+          ) : null}
           <p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <Link
