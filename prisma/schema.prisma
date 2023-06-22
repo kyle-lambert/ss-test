@@ -22,19 +22,19 @@ model User {
 model Password {
   hash String
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @unique
 }
 
 model UserTenant {
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   roleId String
-  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, tenantId])
   @@unique([userId, tenantId, roleId])
@@ -64,10 +64,13 @@ model Subscription {
   stripeSubscriptionId String
 
   tenantId String @unique
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  priceId String
+  price   Price  @relation(fields: [priceId], references: [id], onDelete: Cascade)
 }
 
 model Product {
@@ -81,6 +84,25 @@ model Product {
   active      Boolean?
 
   subscriptions Subscription[]
+  prices        Price[]
+}
+
+model Price {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  priceId       String
+  price         Decimal
+  currency      String
+  type          String
+  billionPeriod String
+  active        Boolean
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  subscriptions Subscription[]
 }
 
 model Role {
@@ -91,7 +113,7 @@ model Role {
   name String
 
   tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   userTenant  UserTenant[]
   permissions Permission[]

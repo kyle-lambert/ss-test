@@ -1,5 +1,5 @@
 import { stripe } from "@/lib/services/stripe.server";
-import { Response, type ErrorResponse } from "@/lib/utils/http";
+import type { Response, ErrorResponse } from "@/lib/utils/http";
 
 import { json, type ActionArgs } from "@remix-run/node";
 import { badRequest } from "remix-utils";

@@ -24,7 +24,7 @@ export function UserRegisterForm<TDataType>({
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
-      <ValidatedForm validator={validator} method="POST">
+      <ValidatedForm validator={validator} method="post">
         <div className="grid gap-2">
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="fullName">
