@@ -10,7 +10,7 @@ export async function validateAction<TDataType>(
     validator: Validator<TDataType>;
     unvalidatedData: FormData;
   },
-  callback: (validatedData: TDataType) => Promise<Response> | Response
+  handler: (validatedData: TDataType) => Promise<Response> | Response
 ) {
   const result = await validator.validate(unvalidatedData);
 
@@ -18,7 +18,7 @@ export async function validateAction<TDataType>(
     return validationError(result.error);
   }
 
-  return callback(result.data);
+  return handler(result.data);
 }
 
 /**

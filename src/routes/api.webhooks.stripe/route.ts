@@ -62,7 +62,7 @@ export async function action({ request }: ActionArgs) {
           break;
         }
         default: {
-          throw new Error("Unhandled Srtipe webhook event");
+          throw new Error("Unhandled Stripe webhook event");
         }
       }
     } catch (error) {
