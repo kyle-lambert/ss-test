@@ -1,4 +1,9 @@
-import { stripe } from "@/lib/services/stripe.server";
+import { logger } from "@/lib/services/logger.server";
+import {
+  handlePriceChange,
+  handleProductChange,
+  stripe,
+} from "@/lib/services/stripe.server";
 import type { Response, ErrorResponse } from "@/lib/utils/http";
 
 import { json, type ActionArgs } from "@remix-run/node";
@@ -38,12 +43,22 @@ export async function action({ request }: ActionArgs) {
       switch (event.type) {
         case "product.created":
         case "product.prices": {
-          const eventData = event.data.object as Stripe.Product;
+          const productData = event.data.object as Stripe.Product;
+          const product = await handleProductChange(productData);
+          logger.info(
+            product,
+            `Successful Stripe webhook event: ${event.type}`
+          );
           break;
         }
         case "prices.created":
         case "prices.prices": {
-          const eventData = event.data.object as Stripe.Price;
+          const priceData = event.data.object as Stripe.Price;
+          const price = await handlePriceChange(priceData);
+          logger.info(
+            { price },
+            `Successful Stripe webhook event: ${event.type}`
+          );
           break;
         }
         default: {

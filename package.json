@@ -44,6 +44,8 @@
     "isbot": "^3.6.10",
     "lodash": "^4.17.21",
     "lucide-react": "^0.244.0",
+    "pino": "^8.14.1",
+    "pino-pretty": "^10.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remix-auth": "^3.4.0",

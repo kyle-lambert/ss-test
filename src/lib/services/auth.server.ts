@@ -8,6 +8,7 @@ import type { Password, User } from "@prisma/client";
 import { sessionStorage } from "@/lib/services/session.server";
 import { prisma } from "@/lib/services/db.server";
 import { type AuthenticateLoginContext } from "@/lib/utils/validation";
+import { Request } from "@remix-run/node";
 
 export const FORM_STRATEGY = "FORM_STRATEGY" as const;
 

@@ -10,7 +10,13 @@ interface ValidatedInputProps extends Omit<InputProps, "name" | "id"> {
 
 const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputProps>(
   ({ name, className, ...props }, ref) => {
-    const { error, getInputProps } = useField(name);
+    const { error, getInputProps } = useField(name, {
+      validationBehavior: {
+        initial: "onChange",
+        whenTouched: "onChange",
+        whenSubmitted: "onChange",
+      },
+    });
     return (
       <>
         <input

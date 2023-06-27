@@ -1,5 +1,13 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, PlusCircle } from "lucide-react";
+import {
+  useFetcher,
+  useNavigate,
+  useNavigation,
+  useParams,
+} from "@remix-run/react";
+import type { Tenant } from "@prisma/client";
+import { ValidatedForm } from "remix-validated-form";
+import { Check, ChevronsUpDown, Loader2, PlusCircle } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -15,14 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useNavigate, useParams } from "@remix-run/react";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -31,10 +31,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import type { Tenant } from "@prisma/client";
+
 import { cn } from "@/lib/utils/cn";
 import { getInitial } from "@/lib/utils/helpers";
+import { ValidatedInput } from "@/components/validated-input";
+import { createTeamValidator } from "@/lib/utils/validation";
 
 interface TenantSwitcherProps {
   tenants: Tenant[];
@@ -43,7 +44,11 @@ interface TenantSwitcherProps {
 export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
   const params = useParams<Record<"tenant", string>>();
+  const navigation = useNavigation();
   const navigate = useNavigate();
+
+  const fetcher = useFetcher();
+  const isFetcherSubmitting = fetcher.state === "submitting";
 
   const currentTenant =
     React.useMemo(() => {
@@ -55,6 +60,12 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
   React.useEffect(() => {
     setSelectedTenant(currentTenant);
   }, [currentTenant]);
+
+  React.useEffect(() => {
+    if (navigation.location?.pathname) {
+      setShowNewTeamDialog(false);
+    }
+  }, [navigation.location?.pathname]);
 
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
@@ -121,42 +132,36 @@ export default function TenantSwitcher({ tenants }: TenantSwitcherProps) {
             Add a new team to manage products and customers.
           </DialogDescription>
         </DialogHeader>
-        <div>
-          <div className="space-y-4 py-2 pb-4">
+        <ValidatedForm
+          id="test1"
+          validator={createTeamValidator}
+          fetcher={fetcher}
+          method="post"
+          action="/resource/tenant"
+          subaction="create"
+        >
+          <div className="space-y-4 py-2 pb-6">
             <div className="space-y-2">
-              <Label htmlFor="name">Team name</Label>
-              <Input id="name" placeholder="Acme Inc." />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="plan">Subscription plan</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">
-                    <span className="font-medium">Free</span> -{" "}
-                    <span className="text-muted-foreground">
-                      Trial for two weeks
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="pro">
-                    <span className="font-medium">Pro</span> -{" "}
-                    <span className="text-muted-foreground">
-                      $9/month per user
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="name">Name</Label>
+              <ValidatedInput name="name" placeholder="Osprey Backbacks" />
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
-            Cancel
-          </Button>
-          <Button type="submit">Continue</Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowNewTeamDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isFetcherSubmitting}>
+              {isFetcherSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create Team
+            </Button>
+          </DialogFooter>
+        </ValidatedForm>
       </DialogContent>
     </Dialog>
   );

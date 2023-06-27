@@ -1,10 +1,9 @@
 import { Link, useActionData } from "@remix-run/react";
 import { type ActionArgs, redirect } from "@remix-run/node";
-import { isArray } from "lodash";
 import { validationError } from "remix-validated-form";
 import { unprocessableEntity } from "remix-utils";
 
-import { prisma } from "@/lib/services/db.server";
+import { Prisma, prisma } from "@/lib/services/db.server";
 import { commitSession, getSession } from "@/lib/services/session.server";
 import { authenticator, hashPassword } from "@/lib/services/auth.server";
 

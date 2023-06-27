@@ -57,7 +57,7 @@ model Tenant {
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
+  stripeId  String   @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -67,40 +67,40 @@ model Subscription {
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [stripeId], onDelete: Cascade)
 
   priceId String
-  price   Price  @relation(fields: [priceId], references: [id], onDelete: Cascade)
+  price   Price  @relation(fields: [priceId], references: [stripeId], onDelete: Cascade)
 }
 
 model Product {
-  id        String   @id @default(cuid())
+  stripeId  String   @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stripeId    String
   name        String
   description String?
-  active      Boolean?
+  active      Boolean
 
   subscriptions Subscription[]
   prices        Price[]
 }
 
 model Price {
-  id        String   @id @default(cuid())
+  stripeId  String   @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  priceId       String
-  price         Decimal
+  unitAmount    Int?
   currency      String
   type          String
-  billionPeriod String
   active        Boolean
+  billionScheme String
+  interval      String?
+  intervalCount Int?
 
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [stripeId], onDelete: Cascade)
 
   subscriptions Subscription[]
 }

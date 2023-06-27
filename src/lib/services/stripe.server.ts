@@ -48,3 +48,52 @@ export async function createAndAssignStripeCustomer({
   const stripeCustomer = await createStripeCustomer({ tenantId, tenantName });
   await assignStripeCustomerToTenant(tenantId, stripeCustomer.id);
 }
+
+/**
+ * Stripe webhook handlers
+ */
+export async function handleProductChange(productData: Stripe.Product) {
+  const result = await prisma.product.upsert({
+    create: {
+      stripeId: productData.id,
+      name: productData.name,
+      description: productData.description,
+      active: productData.active,
+    },
+    update: {
+      name: productData.name,
+      description: productData.description,
+      active: productData.active,
+    },
+    where: {
+      stripeId: productData.id,
+    },
+  });
+  return result;
+}
+
+export async function handlePriceChange(priceData: Stripe.Price) {
+  const result = await prisma.price.upsert({
+    create: {
+      stripeId: priceData.id,
+      unitAmount: priceData.unit_amount,
+      currency: priceData.currency,
+      type: priceData.type,
+      active: priceData.active,
+      billionScheme: priceData.billing_scheme,
+      interval: priceData.recurring?.interval,
+      intervalCount: priceData.recurring?.interval_count,
+      product: {
+        connect: {
+          stripeId:
+            typeof priceData.product === "string" ? priceData.product : "",
+        },
+      },
+    },
+    update: {},
+    where: {
+      stripeId: priceData.id,
+    },
+  });
+  return result;
+}

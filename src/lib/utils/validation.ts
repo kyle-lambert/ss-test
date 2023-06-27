@@ -1,5 +1,25 @@
 import { withZod } from "@remix-validated-form/with-zod";
+import { type Validator, validationError } from "remix-validated-form";
 import { z } from "zod";
+
+export async function validateAction<TDataType>(
+  {
+    validator,
+    unvalidatedData,
+  }: {
+    validator: Validator<TDataType>;
+    unvalidatedData: FormData;
+  },
+  callback: (validatedData: TDataType) => Promise<Response> | Response
+) {
+  const result = await validator.validate(unvalidatedData);
+
+  if (result.error) {
+    return validationError(result.error);
+  }
+
+  return callback(result.data);
+}
 
 /**
  * Login
@@ -49,3 +69,12 @@ const resetPasswordSchema = z
   );
 export type ResetPasswordSchema = z.infer<typeof resetPasswordSchema>;
 export const resetPasswordValidator = withZod(resetPasswordSchema);
+
+/**
+ * Tenant team creation
+ */
+export const createTeamSchema = z.object({
+  name: z.string().min(1),
+});
+export type CreateTeamSchema = z.infer<typeof createTeamSchema>;
+export const createTeamValidator = withZod(createTeamSchema);
